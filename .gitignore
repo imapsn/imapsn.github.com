@@ -1,0 +1,4 @@
+# ignore emacs backup files
+*~
+# ignore generated _site dir
+_site
