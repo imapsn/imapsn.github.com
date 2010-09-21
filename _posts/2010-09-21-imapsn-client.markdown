@@ -62,8 +62,8 @@ construct* and the JSON representation of these.
 <http://json-schema.org/>
 : general json schema info
 
-[beginner's guide to oauth](http://hueniverse.com/2007/10/beginners-guide-to-oauth-part-i-overview/)
-: overview of oauth
+<http://code.google.com/apis/gmail/oauth/>
+: info and examples on using oauth
 
 [Magic Signatures][magicsig]
 : draft spec for signing javascript objects
