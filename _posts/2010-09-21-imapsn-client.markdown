@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "IMAPSN client specification"
+title: "IMAPSN client specification (draft v0.1)"
 ---
 
 {:toc}
