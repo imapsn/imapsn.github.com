@@ -252,14 +252,16 @@ An `X-IMAPSN-object-id` email header must be present and have as its
 value the `id` property of the encoded activity attached to the
 message.
 
+
 ## Object References
 
 It is often necessary to refer to an object for which the sender and
 receiver have the full representation. In this document the term
 *object reference* will be used to refer to an object in the activity
-schema that has the minimum required properties (such as `id`) and
-that sender or receiver would need to look up the full data for the
-object.
+schema that has the minimum required properties to identify the
+object. The two properties in an object reference are `id` and
+`objectType`.
+
 
 ## Message Types
 
@@ -267,6 +269,7 @@ The following are message types sent and processed by an IMAPSN
 client.  The data property of every magic envelope contains a single
 [`activity`][json-activity.html] object. The following are the types
 of messages that an IMAPSN client must recognize.
+
 
 ### `friend-request`
 
@@ -283,7 +286,6 @@ with the following values:
             will only include an `email` property, since the full data
             won't be known until after receiving a `friend-response`.
 
-!!! what is minimum data for a person object?
 
 ### `friend-response`
 
@@ -298,6 +300,7 @@ with the following values:
 
     object: An object reference to the `person` representing the
             friend who initiated the request.
+
 
 ### `news-item`
 
@@ -337,6 +340,7 @@ This is a message that replaces the current data for a friend in
 IMAPSN/contacts.  The message subject is "\[IMAPSN\] person-update:
 {activity.title}" and it has an attached `person` object.
 
+
 ### `comment`
 
 The message subject is "\[IMAPSN\] comment: {activity.title}".
@@ -346,6 +350,7 @@ The activity has the following properties:
     inReplyTo: the object that the comment applies to. Only includes `id`.
     verb: <http://activitystrea.ms/schema/1.0/post>
     object: a relevant object. Typically a <http://activitystrea.ms/schema/1.0/comment>.
+
 
 ### `forward`
 
