@@ -465,9 +465,6 @@ with one or more objects with the following properties.
    <tr><td> field </td> 
        <td> type </td>  
        <td> description </td></tr> 
-   <tr><td> account-name </td>
-       <td> string </td>  
-       <td> the user visible name of the account. </td></tr> 
    <tr><td> account-owner </td>
        <td> see [person.json][] </td>  
        <td> the person data for this IMAPSN user. </td></tr> 
@@ -480,10 +477,6 @@ with one or more objects with the following properties.
             for. Defaults to root INBOX. By configuring this value users can set up a
             mail filtering rule that puts all new IMAPSN messages a
             user-specified folder.</td></tr>
-   <tr><td> auto-approve-follow-requests </td>  
-       <td> boolean </td> 
-       <td> If false follow requests must be confirmed by the user,
-            otherwise they are approved automatically. </td></tr>
    <tr><td> wall-group </td>  
        <td> string (a group name) </td> 
        <td> The name of the group that is able to see messages posted
@@ -517,7 +510,7 @@ here:
        <td> see [core-object.json][] </td>  
        <td> a media link construct referencing the avatar image displayed 
             to represent the person.</td></tr> 
-   <tr><td> public-key </td>
+   <tr><td> publicKey </td>
        <td> string </td>  
        <td> format is [magickey][application/magic-key]</td></tr> 
 </table>
