@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "IMAPSN client specification (draft v0.1)"
+title: "IMAPSN client specification (draft v0.2)"
 ---
 
 {:toc}
@@ -358,8 +358,9 @@ A forward message has a subject of "\[IMAPSN\] forward: {activity.title}".
 Its properties are:
 
     actor: the person sharing the comment
-    verb: <http://activitystrea.ms/schema/1.0/share>
-    object: the object that is being passed on.
+    verb: <http://activitystrea.ms/schema/1.0/reshare>
+    annotation: a comment about the object
+    object: the object that is being passed on (another activity).
 
 This is similar to a "retweet" and gets processed as a `news-item` does.
 
@@ -376,36 +377,37 @@ for each account the client connects to
   <tr><td> field</td>
       <td> type</td>
       <td> description</td></tr>
-  <tr><td> incoming-mail-server</td>
+  <tr><td> name</td>
+      <td> string(255)</td>
+      <td> A name that is unique among accounts for users to identify this account.</td></tr>
+  <tr><td> email-id</td>
+      <td> string(255)</td>
+      <td> The email address used with this account.</td></tr>
+  <tr><td> imap-host</td>
       <td> string(255)</td>
       <td> The name of the IMAP host where there is IMAPSN data.</td></tr>
-  <tr><td> incoming-username</td>
+  <tr><td> imap-port</td>
+      <td> integer</td>
+      <td> The port used when connecting to imap-host.</td></tr>
+  <tr><td> imap-user</td>
       <td> string(100)</td>
       <td> The username used to log into incoming-mail-server if oauth is not supported.</td></tr>
-  <tr><td> incoming-password</td>
+  <tr><td> imap-password</td>
       <td> string(100)</td>
       <td> The password used to log into incoming-mail-server if oauth is not supported.</td></tr>
-  <tr><td> outgoing-mail-server</td>
+  <tr><td> smtp-host</td>
       <td> string(255)</td>
       <td> The name of the SMTP host used to send IMAPSN messages.</td></tr>
-  <tr><td> incoming-username</td>
+  <tr><td> smtp-port</td>
+      <td> integer</td>
+      <td> The port used when connecting to smtp-host.</td></tr>
+  <tr><td> smtp-user</td>
       <td> string(100)</td>
       <td> The username used to log into outgoing-mail-server if oauth is not supported.</td></tr>
-  <tr><td> incoming-password</td>
+  <tr><td> smtp-password</td>
       <td> string(100)</td>
       <td> The password used to log into outgoing-mail-server if oauth is not supported.</td></tr>
-  <tr><td> sftp-server</td>
-      <td> string(255)</td>
-      <td> Optional. web server host for uploads. This is to support
-           uploading and sharing images and other media. Images will
-           not be attached to emails. </td></tr> 
-  <tr><td> sftp-username </td> 
-      <td> string(100) </td> 
-      <td> The username used to log into sftp-server. </td></tr> 
-  <tr><td> sftp-password </td> 
-      <td> string(100) </td> 
-      <td> The password used to log into sftp-server. </td></tr> 
-  <tr><td> IMAPSN-folder </td>
+  <tr><td> imapsn-folder </td>
       <td> string(30) </td>
       <td> This is the folder on the IMAP server where all IMAPSN data is stored. 
            Defaults to IMAPSN.</td></tr>
@@ -421,25 +423,26 @@ default directory layout is
 
     + folder: IMAPSN
     |
-    +----+ message: config-data
+    +----+ folder: contacts
          |
-         + folder: contacts
-         |
-         + message: person-status-map
-         |
-         + message: person-groups
+         + folder: inbox
          |
          + folder: news
          |
          + folder: wall
          |
-         + folder: inbox
+         + message: config-data.json
+         |
+         + message: person-groups.json
+         |
+         + message: person-status-map.json
 
 
 ## Format of Data Stored on IMAP Server But Never Messaged
 
 Since the data will be stored in email messages each message will have
-a standard format.  The subject will be "\[IMAPSN\] {message type} : {activity.title}".
+a standard format.  The subject of messages stored in sub-folders of
+IMAPSN will be "\[IMAPSN\] {message type} : {activity.title}".
 
 Each message is a Multipart/alternative MIME email message that has
 the following parts:
@@ -452,12 +455,13 @@ the following parts:
 
 The core object schema includes an `id` for every object. The
 convention for generating globally unique id's will be to use
-`http://{hostname from email address of account-owner}/{[UUID][]}`. 
+`acct:{email-id}#{UUID}`. Where `{email-id}` is the account email
+addres and `{UUID}` is a [universally unique identifier][UUID].
 
 
-## `IMAPSN/config-data`
+## `IMAPSN/config-data.json`
 
-`config-data` is a the subject of a message stored in the IMAPSN
+`config-data.json` is a the subject of a message stored in the IMAPSN
 folder.  The `application/json` attachment of this message is an array
 with one or more objects with the following properties.
 
@@ -467,10 +471,14 @@ with one or more objects with the following properties.
        <td> description </td></tr> 
    <tr><td> account-owner </td>
        <td> see [person.json][] </td>  
-       <td> the person data for this IMAPSN user. </td></tr> 
-   <tr><td> private-key </td>
+       <td> the person data for this IMAPSN user. The data must have a
+            "publicKey" property in the
+            [magickey][application/magic-key] format.</td></tr>
+   <tr><td> privateKey </td>
        <td> string </td>  
-       <td> format is tbd. </td></tr> 
+       <td> The private key is serialized as an array of bytes in
+            PKCS#8 format. The bytes are base64url encoded and
+            serialized to a string. See <http://tools.ietf.org/html/rfc5208>.</td></tr>
    <tr><td> new-message-folder </td>  
        <td> string(30) </td>  
        <td> Name of IMAP folder where new IMAPSN messages are looked
@@ -484,6 +492,38 @@ with one or more objects with the following properties.
             Defaults to `everybody`.</td></tr>
 </table>
 
+## `IMAPSN/person-groups.json`
+
+A message in the `IMAPSN` folder with the subject
+"person-groups.json".  The `application/json` attachment of this
+message will contain a JSON object mapping each `group-name` property
+to an array of `id` strings that correpsond to `person` objects found
+in `IMAPSN/contacts`.
+
+
+## `IMAPSN/person-status-map.json`
+
+A message in the IMAPSN folder with the subject "person-status-map".
+The `application/json` attachment of this message will contain a JSON
+object mapping each person `id` to a status object with the folowing
+properties:
+
+<table padding="5" border="1"> 
+   <tr><td> field </td> 
+       <td> type </td>  
+       <td> description </td></tr> 
+   <tr><td> id </td>
+       <td> the `id` of a `person` in IMAPSN/contacts </td>  
+   <tr><td> status </td>
+       <td> string </td>  
+       <td> one of `pending`, `asleep`, `neglected`,  or `active`.</td></tr> 
+   <tr><td> last-sent </td>
+       <td> ISO 8601 date-time string  </td>  
+       <td> Time when an activity or message was last sent to this person. </td></tr> 
+   <tr><td> last-received </td>
+       <td> ISO 8601 date-time string  </td>  
+       <td> Time when an activity or message was last received from this person. </td></tr> 
+</table>
 
 ## `IMAPSN/contacts`
 
@@ -528,42 +568,6 @@ documentation.  Here is an example of a media link construct:
         duration: '93' // in seconds
     }
 
-## `IMAPSN/person-status-map`
-
-A message in the IMAPSN folder with the subject "\[IMAPSN\]
-person-status-map".  The `application/json` attachment of this message
-will contain an array of objects with the folowing properties:
-
-<table padding="5" border="1"> 
-   <tr><td> field </td> 
-       <td> type </td>  
-       <td> description </td></tr> 
-   <tr><td> email </td>
-       <td> email address of a person in IMAPSN/contacts </td>  
-       <td>  </td></tr>
-   <tr><td> internal-id </td>
-       <td> string </td>
-       <td> a uuid-id generated by the client to identify 
-            the person associated with this email address </td></tr>
-   <tr><td> status </td>
-       <td> string </td>  
-       <td> one of `pending`, `asleep`, `neglected`,  or `active`.</td></tr> 
-   <tr><td> last-sent </td>
-       <td> ISO 8601 date-time string  </td>  
-       <td> Time when an activity or message was last sent to this person. </td></tr> 
-   <tr><td> last-received </td>
-       <td> ISO 8601 date-time string  </td>  
-       <td> Time when an activity or message was last received from this person. </td></tr> 
-</table>
-
-## `IMAPSN/person-groups`
-
-A message in the `IMAPSN` folder with the subject "\[IMAPSN\]
-person-groups".  The `application/json` attachment of this message
-will contain an array of objects that each contain a `group-name`
-property and a `persons` property that is an array of `id`
-strings that correpsond to `person` objects in `IMAPSN/contacts`.
-
 
 ## `IMAPSN/news`
 
@@ -599,9 +603,6 @@ this folder.
 
 This is the folder where processed incoming `message` messages are
 stored. The IMAP interface is used to mark them as read or not.
-
-
-
 
 
 Program Control Flow
