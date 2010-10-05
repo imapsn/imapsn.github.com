@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "IMAPSN client specification (draft v0.2)"
+title: "IMAPSN client specification (draft v0.3)"
 ---
 
 {:toc}
@@ -278,6 +278,8 @@ be a friend. Message subject is "\[IMAPSN\] friend-request:
 {name of requestor}". The attached JSON data is an activity
 with the following values:
 
+    id: a unique id for the activity
+
     actor: `person` object of the one making the request.
 
     verb: http://activitystrea.ms/schema/1.0/make-friend
@@ -294,6 +296,8 @@ to be a friend.  Message subject is "\[IMAPSN\] friend-response:
 {name of responder}".  The attached JSON data is an `activity`
 with the following values:
 
+    id: a unique id for the activity
+
     actor: The full person object of the one making the response.
 
     verb: http://activitystrea.ms/schema/1.0/make-friend
@@ -301,6 +305,8 @@ with the following values:
     object: An object reference to the `person` representing the
             friend who initiated the request.
 
+    inReplyTo: An object reference (containing just the id) to the
+               friend-request activity.
 
 ### `news-item`
 
@@ -316,6 +322,7 @@ subject is "\[IMAPSN\] wall-post: {ativity.title}".
 
 The activity contains the following properties:
 
+    id: a unique id for the activity
     actor: object reference to the `person` making the post
     verb: any appropriate activity verb  (e.g., `tag`, `post`, `share`)
     object: the object of the verb (e.g., a `photo`)
@@ -329,6 +336,7 @@ mail subject is: "\[IMAPSN\] direct-message: {activity.title}".
 
 The activity contains the following properties:
 
+    id: a unique id for the activity
     actor: object reference to the `person` sending the message
     verb: post
     object: any appropriate object, typically a `note`. Could also be a `photo`, etc.
@@ -346,6 +354,7 @@ IMAPSN/contacts.  The message subject is "\[IMAPSN\] person-update:
 The message subject is "\[IMAPSN\] comment: {activity.title}".
 The activity has the following properties:
 
+    id: a unique id for the activity
     actor: object reference to the `person` making the comment
     inReplyTo: the object that the comment applies to. Only includes `id`.
     verb: <http://activitystrea.ms/schema/1.0/post>
@@ -357,6 +366,7 @@ The activity has the following properties:
 A forward message has a subject of "\[IMAPSN\] forward: {activity.title}".  
 Its properties are:
 
+    id: a unique id for the activity
     actor: the person sharing the comment
     verb: <http://activitystrea.ms/schema/1.0/reshare>
     annotation: a comment about the object
@@ -473,7 +483,11 @@ with one or more objects with the following properties.
        <td> see [person.json][] </td>  
        <td> the person data for this IMAPSN user. The data must have a
             "publicKey" property in the
-            [magickey][application/magic-key] format.</td></tr>
+            [magickey][application/magic-key] format, and a "keyhash"
+            property that is the base64url-encoded SHA256 hash of the
+            public signing key's magicsig representation. The
+            person.id is formatted as: "acct:" + email_address +
+            "#0"</td></tr>
    <tr><td> privateKey </td>
        <td> string </td>  
        <td> The private key is serialized as an array of bytes in
@@ -650,14 +664,14 @@ described in the "Interfaces" section of this document.
 
 ### Send `friend-request`
 
-1. Construct the `friend-request` activity, and make a signed magic
-   envelope.
+1. Construct the `friend-request` activity with a unique id, and make
+   a signed magic envelope.
 
 2. Email the `friend-request` message.
 
 3. Make an initial entry in the `person-status-map`.
 
-   1. id = null
+   1. id = "acct:" + friend_email + "#0"
    2. email = from friend request
    3. status = `pending`
    4. last-sent = now
@@ -674,16 +688,18 @@ described in the "Interfaces" section of this document.
 
 3. Create an entry in the person status map:
 
-   1. internal-id = id from `friend-request`
-   2. email = from friend-request
-   3. status = `active`
+   1. id = from actor in friend-request activity
+   2. email = from actor in friend-request
+   3. status = active
    4. last-sent = {current time} (when friend-response sent)
    5. last-received = {current time} (when friend-request recieved)
 
 4. Store a message containing the decoded `person` JSON object
    representing the new friend in `IMAPSN/contacts`.
 
-5. Email a signed `friend-response` back to the requester.
+5. Email a signed `friend-response` back to the requester. The "From:"
+   header must match the address to which the the friend-request was
+   sent.
 
 6. Email a signed `news-item` with a
    `http://activitystrea.ms/schema/1.0/make-friend` verb to all
@@ -700,8 +716,18 @@ described in the "Interfaces" section of this document.
 
 3. Update `person-status-map` for the responding friend
 
-   1. status = `active`
-   2. last-received = {current time}
+   1. Use the email in the "From:" header to construct an id: "acct:" + email + "#0"
+   2. look that id up in person status map
+   3. if that id is different than the id of the actor in the
+      friend-response's activity, move the entry so that it is keyed
+      by the actor's person.id
+   4. set status = `active`
+   5. set last-received = {current time}
+
+Note on step 3: this can happen if someone moves their IMAPSN data to
+another service and changes their email. Their person.id will still be
+formed out of their old email even though their person.email is
+different.
 
 4. Store a message containing the `person` JSON object representing
    the new friend in `IMAPSN/contacts`.
