@@ -5,8 +5,7 @@ title: "IMAPSN client specification (draft v0.3)"
 
 {:toc}
 
-1. Overview
-===========
+# 1. Overview
 
 The goal of IMAPSN is to create a social networking platform
 
@@ -46,8 +45,8 @@ Email as a storage and messaging platform has two serious drawbacks:
 Assuming we can address these problems or live with some trade-offs,
 here is a design for implementing social networking concepts on email.
 
-2. References
-=============
+# 2. References
+
 
 [Activity Streams Concepts and Representations][json-activity.html]
 : This document describes the *activity construct* and the *object
@@ -68,8 +67,8 @@ construct* and the JSON representation of these.
 [Magic Signatures][magicsig]
 : draft spec for signing javascript objects
 
-3. Definitions
-==============
+
+# 3. Definitions
 
 *account*
 : a single email address or identity for which an IMAPSN client sends and receives messages.
@@ -101,8 +100,8 @@ messages.
 : The "status" Object type represents a human-readable update of the
 author's situation, mood, location or other status.
 
-4. Requirements
-===============
+
+# 4. Requirements
 
 ## 4.1 Functional Requirements
 
@@ -220,8 +219,7 @@ the item.
 2. user1 updates person data for user2.
 
 
-5. Interfaces
-=============
+# 5. Interfaces
 
 ## 5.1 IMAP and SMTP
 
@@ -375,8 +373,7 @@ Its properties are:
 This is similar to a "retweet" and gets processed as a `news-item` does.
 
 
-6. Data Model
-=============
+# 6. Data Model
 
 ## 6.1 Data stored by the client
 
@@ -484,7 +481,7 @@ with one or more objects with the following properties.
        <td> type </td>  
        <td> description </td></tr> 
    <tr><td> account-owner </td>
-       <td> see [person.json][] </td>  
+       <td> see [person][person.json] </td>  
        <td> the person data for this IMAPSN user. The data must have a
             "publicKey" property in the
             [magickey][application/magic-key] format, and a "keyhash"
@@ -570,7 +567,7 @@ here:
        <td> type </td>  
        <td> description </td></tr> 
    <tr><td> email </td>
-       <td> see [person.json][] </td> 
+       <td> see [person][person.json] </td> 
        <td> This is where activities will be sent.</td></tr> 
    <tr><td> activity.title </td>
        <td> see [core-object.json][] </td>  
@@ -634,8 +631,7 @@ This is the folder where processed incoming `message` messages are
 stored. The IMAP interface is used to mark them as read or not.
 
 
-7. Program Control Flow
-=======================
+# 7. Program Control Flow
 
 ## 7.1 Client Start-up
 
