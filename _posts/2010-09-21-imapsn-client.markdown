@@ -5,8 +5,8 @@ title: "IMAPSN client specification (draft v0.3)"
 
 {:toc}
 
-Overview
-========
+1. Overview
+===========
 
 The goal of IMAPSN is to create a social networking platform
 
@@ -46,8 +46,8 @@ Email as a storage and messaging platform has two serious drawbacks:
 Assuming we can address these problems or live with some trade-offs,
 here is a design for implementing social networking concepts on email.
 
-References
-==========
+2. References
+=============
 
 [Activity Streams Concepts and Representations][json-activity.html]
 : This document describes the *activity construct* and the *object
@@ -68,8 +68,8 @@ construct* and the JSON representation of these.
 [Magic Signatures][magicsig]
 : draft spec for signing javascript objects
 
-Definitions
-===========
+3. Definitions
+==============
 
 *account*
 : a single email address or identity for which an IMAPSN client sends and receives messages.
@@ -101,10 +101,10 @@ messages.
 : The "status" Object type represents a human-readable update of the
 author's situation, mood, location or other status.
 
-Requirements
-============
+4. Requirements
+===============
 
-## Functional Requirements
+## 4.1 Functional Requirements
 
 IMAPSN is built on an IMAP server and SMTP server.
 
@@ -129,9 +129,9 @@ The IMAPSN client will do the following:
 *   Add an account
 *   Switch between accounts
 
-## Functional Flows
+## 4.2 Functional Flows
 
-### Use Case 1: make friend request and response
+### 4.2.1 Use Case: make friend request and response
 
 1. user1.client emails a `friend-request` message to user2 
 2. *-- time passes --*
@@ -146,7 +146,7 @@ The IMAPSN client will do the following:
 8. user1.client emails an activity with the `make-friend` verb to `wall-group`.
 9. user1.client notifies user1 of friendship.
 
-### Use Case 2: Message an activity to a group
+### 4.2.2 Use Case: Message an activity to a group
 
 User's define their own groups. A special group called `everybody`
 includes all persons in `IMAPSN/contacts`. Messages are always sent
@@ -157,7 +157,7 @@ to groups using BCC.
 3. *-- time passes --*
 4. user2.client processes `news-item` message and displays in news list
 
-### Use case 3: Post to a wall
+### 4.2.3 Use case: Post to a wall
 
 1. user1.client emails a `wall-post` message to a confirmed friend, user2.
 2. *-- time passes --*
@@ -171,7 +171,7 @@ to groups using BCC.
 A variation of this is tagging multiple people in an image. The image
 is posted to the wall of each person tagged.
 
-### Use Case 4: Reply to Activities
+### 4.2.4 Use Case: Reply to Activities
 
 This is the functional flow for user2 replying to ("liking" or
 "commenting" on) an activity received from user1.
@@ -194,7 +194,7 @@ original message.  user2 has the option of forwarding an activity
 with a comment. Then the replies will be limited to the group user2
 forwarded to, which may or may not include user1.
 
-### Use Case 5: Forward an Activity
+### 4.2.5 Use Case: Forward an Activity
 
 1. user2 receives `news-item-1` from user1.
 2. user2 wants to share `news-item-1` with some of her own freinds
@@ -214,16 +214,16 @@ original.  The recommended approach is to make the forward a visually
 separate item in the news stream, with an indication of who forwarded
 the item.
 
-### Use Case 6: Update person data
+### 4.2.6 Use Case: Update person data
 
 1. user2 emails a `person-update` message containing user2's person object to user1.
 2. user1 updates person data for user2.
 
 
-Interfaces
-==========
+5. Interfaces
+=============
 
-## IMAP and SMTP
+## 5.1 IMAP and SMTP
 
 All data is accessed through IMAP APIs. 
 See <http://java.sun.com/products/javamail/javadocs/com/sun/mail/imap/IMAPStore.html>
@@ -234,7 +234,7 @@ See <http://java.sun.com/products/javamail/javadocs/com/sun/mail/smtp/package-su
 or <http://docs.python.org/library/smtplib.html>
 
 
-## Data Format of E-mail messages 
+## 5.2 Data Format of E-mail messages 
 
 Each message will have a subject of "\[IMAPSN\] {message type} : {activity.title}".
 
@@ -253,7 +253,7 @@ value the `id` property of the encoded activity attached to the
 message.
 
 
-## Object References
+## 5.3 Object References
 
 It is often necessary to refer to an object for which the sender and
 receiver have the full representation. In this document the term
@@ -263,7 +263,7 @@ object. The two properties in an object reference are `id` and
 `objectType`.
 
 
-## Message Types
+## 5.4 Message Types
 
 The following are message types sent and processed by an IMAPSN
 client.  The data property of every magic envelope contains a single
@@ -271,7 +271,7 @@ client.  The data property of every magic envelope contains a single
 of messages that an IMAPSN client must recognize.
 
 
-### `friend-request`
+### 5.4.1 `friend-request`
 
 This is a message that includes data from a person making a request to
 be a friend. Message subject is "\[IMAPSN\] friend-request:
@@ -289,7 +289,7 @@ with the following values:
             won't be known until after receiving a `friend-response`.
 
 
-### `friend-response`
+### 5.4.2 `friend-response`
 
 This is a message that includes data from a person accepting a request
 to be a friend.  Message subject is "\[IMAPSN\] friend-response:
@@ -308,14 +308,14 @@ with the following values:
     inReplyTo: An object reference (containing just the id) to the
                friend-request activity.
 
-### `news-item`
+### 5.4.3 `news-item`
 
 These messages contain an attached `activity` object that is to be
 displayed in the news stream.  The message subject is 
 "\[IMAPSN\] news-item: {activity.title}"
 
 
-### `wall-post`
+### 5.4.4 `wall-post`
 
 A `wall-post` is an activity with a person as a target. The message
 subject is "\[IMAPSN\] wall-post: {ativity.title}".
@@ -329,7 +329,7 @@ The activity contains the following properties:
     target: object reference to the `person` whose wall this is posted to
 
 
-### `direct-message`
+### 5.4.5 `direct-message`
 
 This is a message addressed specifically to a friend or group.  The
 mail subject is: "\[IMAPSN\] direct-message: {activity.title}".
@@ -342,14 +342,14 @@ The activity contains the following properties:
     object: any appropriate object, typically a `note`. Could also be a `photo`, etc.
 
 
-### `person-update`
+### 5.4.6 `person-update`
 
 This is a message that replaces the current data for a friend in
 IMAPSN/contacts.  The message subject is "\[IMAPSN\] person-update:
 {activity.title}" and it has an attached `person` object.
 
 
-### `comment`
+### 5.4.7 `comment`
 
 The message subject is "\[IMAPSN\] comment: {activity.title}".
 The activity has the following properties:
@@ -361,7 +361,7 @@ The activity has the following properties:
     object: a relevant object. Typically a <http://activitystrea.ms/schema/1.0/comment>.
 
 
-### `forward`
+### 5.4.8 `forward`
 
 A forward message has a subject of "\[IMAPSN\] forward: {activity.title}".  
 Its properties are:
@@ -375,13 +375,14 @@ Its properties are:
 This is similar to a "retweet" and gets processed as a `news-item` does.
 
 
-Data Model
-==========
+6. Data Model
+=============
 
-## Data stored by the client
+## 6.1 Data stored by the client
 
 The following values are configured and stored locally by the client
-for each account the client connects to
+for each account the client connects to. The encryption mechanism used
+by the client to store passwords is not specified in this document.
 
 <table padding="5" border="1">
   <tr><td> field</td>
@@ -417,6 +418,9 @@ for each account the client connects to
   <tr><td> smtp-password</td>
       <td> string(100)</td>
       <td> The password used to log into outgoing-mail-server if oauth is not supported.</td></tr>
+  <tr><td> private-key-password</td>
+      <td> string(100)</td>
+      <td> The password used to decrypt the user's private key. See Section 6.5.</td></tr>
   <tr><td> imapsn-folder </td>
       <td> string(30) </td>
       <td> This is the folder on the IMAP server where all IMAPSN data is stored. 
@@ -424,7 +428,7 @@ for each account the client connects to
 </table> 
 
 
-## IMAP Directory layout
+## 6.2 IMAP Directory layout
 
 The data used by IMAPSN is stored in messages under an IMAP folder.
 Before storing any interface messages in IMAPSN folders the magic
@@ -441,14 +445,14 @@ default directory layout is
          |
          + folder: wall
          |
-         + message: config-data.json
+         + message: account-owner.json
          |
          + message: person-groups.json
          |
          + message: person-status-map.json
 
 
-## Format of Data Stored on IMAP Server But Never Messaged
+## 6.3 Format of Data Stored on IMAP Server But Never Messaged
 
 Since the data will be stored in email messages each message will have
 a standard format.  The subject of messages stored in sub-folders of
@@ -461,7 +465,7 @@ the following parts:
 * ``text/plain``: an optional user friendly plaintext representation
 
 
-## IDs
+## 6.4 IDs
 
 The core object schema includes an `id` for every object. The
 convention for generating globally unique id's will be to use
@@ -469,9 +473,9 @@ convention for generating globally unique id's will be to use
 addres and `{UUID}` is a [universally unique identifier][UUID].
 
 
-## `IMAPSN/config-data.json`
+## 6.5 `IMAPSN/account-owner.json`
 
-`config-data.json` is a the subject of a message stored in the IMAPSN
+`account-owner.json` is a the subject of a message stored in the IMAPSN
 folder.  The `application/json` attachment of this message is an array
 with one or more objects with the following properties.
 
@@ -490,9 +494,7 @@ with one or more objects with the following properties.
             "#0"</td></tr>
    <tr><td> privateKey </td>
        <td> string </td>  
-       <td> The private key is serialized as an array of bytes in
-            PKCS#8 format. The bytes are base64url encoded and
-            serialized to a string. See <http://tools.ietf.org/html/rfc5208>.</td></tr>
+       <td> This is the encoded private key. See the next section for encoding format.</td></tr>
    <tr><td> new-message-folder </td>  
        <td> string(30) </td>  
        <td> Name of IMAP folder where new IMAPSN messages are looked
@@ -506,16 +508,29 @@ with one or more objects with the following properties.
             Defaults to `everybody`.</td></tr>
 </table>
 
-## `IMAPSN/person-groups.json`
+## 6.5.1 Private Key Storage Format
+
+First the private key is serialized into PKCS#8 encoding and then
+base64url encoded.  Next a key is derived from the
+private-key-password using PBKDF2WithHmacSHA1 and the private key
+string is encrypted using the derived key with the
+DES/CBC/PKCS5Padding encryption scheme. See
+<http://tools.ietf.org/html/rfc2898>.
+
+Finally the three results of encryption are base64url encoded and
+serialized to a string separated by a "." (0x2E) character: the cipher
+text, the salt, and the initialization vector.
+
+## 6.6 `IMAPSN/person-groups.json`
 
 A message in the `IMAPSN` folder with the subject
 "person-groups.json".  The `application/json` attachment of this
 message will contain a JSON object mapping each `group-name` property
-to an array of `id` strings that correpsond to `person` objects found
+to an array of `id` strings that correspond to `person` objects found
 in `IMAPSN/contacts`.
 
 
-## `IMAPSN/person-status-map.json`
+## 6.7 `IMAPSN/person-status-map.json`
 
 A message in the IMAPSN folder with the subject "person-status-map".
 The `application/json` attachment of this message will contain a JSON
@@ -527,7 +542,7 @@ properties:
        <td> type </td>  
        <td> description </td></tr> 
    <tr><td> id </td>
-       <td> the `id` of a `person` in IMAPSN/contacts </td>  
+       <td> the `id` of a `person` in IMAPSN/contacts </td></tr>
    <tr><td> status </td>
        <td> string </td>  
        <td> one of `pending`, `asleep`, `neglected`,  or `active`.</td></tr> 
@@ -539,7 +554,7 @@ properties:
        <td> Time when an activity or message was last received from this person. </td></tr> 
 </table>
 
-## `IMAPSN/contacts`
+## 6.8 `IMAPSN/contacts`
 
 The IMAPSN/contacts folder will contain one message per person that is
 a confirmed friend.
@@ -569,7 +584,7 @@ here:
        <td> format is [magickey][application/magic-key]</td></tr> 
 </table>
 
-### media link construct
+### 6.8.1 media link construct
 
 The info on the media link construct is sparse in current activity stream
 documentation.  Here is an example of a media link construct:
@@ -583,7 +598,7 @@ documentation.  Here is an example of a media link construct:
     }
 
 
-## `IMAPSN/news`
+## 6.9 `IMAPSN/news`
 
 Messages in the IMAPSN/news folder will have a subject of
 "\[IMAPSN\] activity: {activity.title}".  The `application/json`
@@ -607,22 +622,22 @@ here.
 </table>
 
 
-## `IMAPSN/wall`
+## 6.10 `IMAPSN/wall`
 
 This is the folder where processed incoming `wall-post` messages are
 stored. A message is removed from the user's wall by deleting it from
 this folder.
 
-## `IMAPSN/inbox`
+## 6.11 `IMAPSN/inbox`
 
 This is the folder where processed incoming `message` messages are
 stored. The IMAP interface is used to mark them as read or not.
 
 
-Program Control Flow
-====================
+7. Program Control Flow
+=======================
 
-## Client Start-up
+## 7.1 Client Start-up
 
 These steps are taken every time the client starts up.
 
@@ -638,7 +653,7 @@ These steps are taken every time the client starts up.
    4. otherwise set status to `active`.
 
 
-## Preprocess incoming email message
+## 7.2 Preprocess incoming email message
 
 Before the processing for a specific message type, all incoming
 messages will usuall first be processed as follows:
@@ -656,13 +671,13 @@ messages will usuall first be processed as follows:
    status as prescribed in "Client Start-up".
 
 
-## Sending and Processing Message Types
+## 7.3 Sending and Processing Message Types
 
 The following sections give more detailed steps for the messages
 described in the "Interfaces" section of this document.
 
 
-### Send `friend-request`
+### 7.3.1 Send `friend-request`
 
 1. Construct the `friend-request` activity with a unique id, and make
    a signed magic envelope.
@@ -678,7 +693,7 @@ described in the "Interfaces" section of this document.
    5. last-received = null 
 
 
-### Process `friend-request`
+### 7.3.2 Process `friend-request`
 
 1. [Decode][decoded] the incoming `friend-request`.
 
@@ -706,7 +721,7 @@ described in the "Interfaces" section of this document.
    friends in the configured `wall-group`.
 
 
-### Process a `friend-response`
+### 7.3.3 Process a `friend-response`
 
 1. [Decode][decoded] the incoming `friend-response` .
 
@@ -736,7 +751,7 @@ different.
    to all friends in the configured `wall-group`.
 
 
-### Send `news-item`
+### 7.3.4 Send `news-item`
 
 1. Determine active group members in the specified group.
 
@@ -753,7 +768,7 @@ different.
    messages.
 
 
-### Process a `news-item`
+### 7.3.5 Process a `news-item`
 
 1. Preprocess the incoming message.
 
@@ -763,7 +778,7 @@ different.
 3. The news item may now be displayed in the users's news stream.
 
 
-### Process `wall-post`
+### 7.3.6 Process `wall-post`
 
 1. Preprocess the incoming message.
 
@@ -782,7 +797,7 @@ different.
 4. The wall post may now be displayed to the user when viewing the wall.
 
 
-### Send `comment`
+### 7.3.7 Send `comment`
 
 1. Construct an activity and set inReplyTo to an object with an `id`
    that references the original. 
@@ -801,7 +816,7 @@ different.
    who is a friend.
 
 
-### Process `comment`
+### 7.3.8 Process `comment`
 
 1. Preprocess the incoming message.
 
@@ -823,7 +838,7 @@ different.
 6. The comment may now be displayed to the user.
 
 
-### `forward` an activity
+### 7.3.9 `forward` an activity
 
 This is done just like a `news-item` except the activity should be
 constructed as described previously for a `forward` message.
@@ -832,12 +847,12 @@ Once an activity is forwarded, comments are sent to and distributed by
 the person who forwarded the message.
 
 
-### Process a `forward` activity
+### 7.3.10 Process a `forward` activity
 
 This is processed just like a `news-item`.
 
 
-### Send `direct-message`
+### 7.3.11 Send `direct-message`
 
 1. Determine list of recipients (may be a group or may be directly
    adressed).  Note: mesasges are sent regardless of status in
@@ -851,7 +866,7 @@ This is processed just like a `news-item`.
 4. Place a copy of sent `direct-message` in `IMAPSN/inbox`.
 
 
-### Process incoming `direct-message`
+### 7.3.12 Process incoming `direct-message`
 
 1. Preprocess the incoming `direct-message`.
 
