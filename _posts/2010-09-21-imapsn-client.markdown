@@ -512,8 +512,8 @@ with one or more objects with the following properties.
 
 ## 6.5.1 Private Key Storage Format
 
-First a string is constructed with two parts "PKCS8.<data>" where
-<data> is the private key serialized in PKCS#8 encoding and base64url
+First a string is constructed with two parts "PKCS8.{data}" where
+{data} is the private key serialized in PKCS#8 encoding and base64url
 encoded.
 
 Next, the key is optionally encrypted.  A key is derived from the
@@ -529,8 +529,7 @@ character:
     "DSA".<cipher text>.<salt>.<initialization vector>
 
 The choice of whether to encrypt the key is left up to clients or
-users, and the choice may be made based on whether the IMAP server
-supports SSL or not.
+users.
 
 
 ## 6.6 `IMAPSN_config/person-groups.json`
@@ -538,8 +537,10 @@ supports SSL or not.
 A message in the `IMAPSN` folder with the subject
 "person-groups.json".  The `application/json` attachment of this
 message will contain a JSON object mapping each `group-name` property
-to an array of `id` strings that correspond to `person` objects found
-in `IMAPSN_contacts`.
+to an array of person references which contain the properties `id`,
+`dislayName`, and `email`.  The `email` property is a string
+containing the email address.  The `id` strings correspond to `person`
+objects found in `IMAPSN_contacts`.
 
 
 ## 6.7 `IMAPSN_config/person-status-map.json`
@@ -566,9 +567,16 @@ properties:
        <td> Time when an activity or message was last received from this person. </td></tr> 
 </table>
 
-## 6.8 `IMAPSN_key-map.json
+## 6.8 `IMAPSN_config/key-map.json
 
-## 6.8 `IMAPSN_contacts`
+The key map is a message with the subject `key-map.json` where the
+attached json data contains a map of "keyhash" values to public
+keys. The key hash is the base64url-encoded SHA256 hash of the public
+signing key's magicsig representation. The public key is a string
+encoding of the pubic key in the [magickey][application/magic-key]
+format.
+
+## 6.9 `IMAPSN_contacts`
 
 The IMAPSN_contacts folder will contain one message per person that is
 a confirmed friend.
@@ -598,7 +606,7 @@ object. Some of the important fields are listed here:
        <td> format is [magickey][application/magic-key]</td></tr> 
 </table>
 
-### 6.8.1 media link construct
+### 6.9.1 media link construct
 
 The info on the media link construct is sparse in current activity stream
 documentation.  Here is an example of a media link construct:
@@ -612,7 +620,7 @@ documentation.  Here is an example of a media link construct:
     }
 
 
-## 6.9 `IMAPSN_news`
+## 6.10 `IMAPSN_news`
 
 Messages in the IMAPSN_news folder will have a subject of
 "\[IMAPSN\] activity: {activity.title}".  The `application/json`
@@ -636,13 +644,13 @@ here.
 </table>
 
 
-## 6.10 `IMAPSN_wall`
+## 6.11 `IMAPSN_wall`
 
 This is the folder where processed incoming `wall-post` messages are
 stored. A message is removed from the user's wall by deleting it from
 this folder.
 
-## 6.11 `IMAPSN_inbox`
+## 6.12 `IMAPSN_inbox`
 
 This is the folder where processed incoming `message` messages are
 stored. The IMAP interface is used to mark them as read or not.
@@ -712,7 +720,8 @@ described in the "Interfaces" section of this document.
 
 2. Verify signature using the `public-key` property from the `person`
    object of the friend request. If it doesn't verify delete the
-   message, otherwise continue.
+   message, otherwise save the keyhash and key in `key-map.json` and
+   continue.
 
 3. Create an entry in the person status map:
 
