@@ -148,7 +148,9 @@ The IMAPSN client will do the following:
 ### 4.2.2 Use Case: Message an activity to a group
 
 User's define their own groups. A special group called `everybody`
-includes all persons in `IMAPSN/contacts`. 
+includes all accpeted friends. This list correpsonds to all messages
+in the `IMAPSN` folder that have a subject that starts with
+"/contacts".
 
 1. user1 chooses a group to receive the message, and composes the message.
 2. user1.client emails the `news-item` message to group
@@ -342,7 +344,7 @@ The activity contains the following properties:
 ### 5.4.6 `person-update`
 
 This is a message that replaces the current data for a friend in
-IMAPSN/contacts.  The message subject is "\[IMAPSN\] person-update:
+the `IMAPSN` folder.  The message subject is "\[IMAPSN\] person-update:
 {activity.title}" and it has an attached `person` object.
 
 
@@ -434,13 +436,13 @@ Before storing any interface messages in IMAPSN folders the magic
 envelope is removed from the ``application/json`` attachment.  All
 messages are stored in the configured "imapsn-folder" specified in the
 client's account configuration.  The default name for this folder is
-IMAPSN.  Each message in the IMAPSN folder contains an attached JSON
-file.  The subject of each message is a path where each part is
+`IMAPSN`.  Each message in the `IMAPSN` folder contains an attached
+JSON file.  The subject of each message is a path where each part is
 separated by a "/".  The final part of the path is the name of the
 attached file. Clients must not use nested IMAP Folders to organize
 messages since nested Folders are not supported by all IMAP servers.
 
-The messages in the IMAPSN folder have the following subjects:
+The messages in the `IMAPSN` folder have the following subjects:
 
          + path: /contacts/*
          |
@@ -463,7 +465,7 @@ The messages in the IMAPSN folder have the following subjects:
 
 ## 6.3 Format of Data Stored on IMAP Server But Never Messaged
 
-Each message in the IMAPSN folder is a Multipart/alternative MIME
+Each message in the `IMAPSN` folder is a Multipart/alternative MIME
 email message that has the following parts:
 
 * ``application/json``: the JSON representation serialized in plain text.
@@ -481,7 +483,7 @@ addres and `{UUID}` is a [universally unique identifier][UUID].
 ## 6.5 `/account-owner.json`
 
 `/account-owner.json` is a the subject of a message stored in the
-IMAPSN folder.  The `application/json` attachment of this message is
+`IMAPSN` folder.  The `application/json` attachment of this message is
 an JSON object with one or more objects with the following properties.
 
 <table padding="5" border="1"> 
@@ -548,7 +550,7 @@ objects found in `/contacts` messages.
 
 ## 6.7 `/person-status-map.json`
 
-A message in the IMAPSN folder with the subject "/person-status-map.json".
+A message in the `IMAPSN` folder with the subject "/person-status-map.json".
 The `application/json` attachment of this message will contain a JSON
 object mapping each person `id` to a status object with the folowing
 properties:
@@ -581,7 +583,7 @@ format.
 
 ## 6.9 `/contacts`
 
-The IMAPSN folder will contain one message per person that is
+The `IMAPSN` folder will contain one message per person that is
 a confirmed friend.
 
 The subject of each message will be "/contacts/{person.id}".
@@ -625,7 +627,7 @@ documentation.  Here is an example of a media link construct:
 
 ## 6.10 `/news`
 
-Messages in the IMAPSN folder that are news-items will have a subject
+Messages in the `IMAPSN` folder that are news-items will have a subject
 of "/news/{activity.id}".  The `application/json` attachment will be
 named {activity.id} and will contain an
 [activity][activity.json]. Some of the important fields are listed
@@ -649,12 +651,12 @@ here.
 
 ## 6.11 `/wall`
 
-Messages in the IMAPSN folder that are wall-posts will have a subject
+Messages in the `IMAPSN` folder that are wall-posts will have a subject
 of "/wall/{activity.id}".  
 
 ## 6.12 `/inbox`
 
-Messages in the IMAPSN folder that are direct messages will have a
+Messages in the `IMAPSN` folder that are direct messages will have a
 subject of /inbox/{activity.id}". The IMAP interface is used to mark
 them as read or not.
 
@@ -705,16 +707,18 @@ described in the "Interfaces" section of this document.
 1. Construct the `friend-request` activity with a unique id, and make
    a signed magic envelope.
 
-2. Email the `friend-request` message.
+2. Email the `friend-request` message with the attached activity.
 
 3. Make an initial entry in the `/person-status-map.json`.
 
-   1. id = "acct:" + friend_email + "#0"
+   1. id = activity.id
    2. email = from friend request
    3. status = `pending`
    4. last-sent = now
    5. last-received = null 
 
+The initial id value for the person-status-map entry is the the id of
+the friend request activity.
 
 ### 7.3.2 Process `friend-request`
 
@@ -734,11 +738,12 @@ described in the "Interfaces" section of this document.
    5. last-received = {current time} (when friend-request recieved)
 
 4. Store a message containing the decoded `person` JSON object
-   representing the new friend in `IMAPSN/contacts`.
+   representing the new friend in the `IMAPSN` folder with a subject
+   of "/contacts/{activity.actor.id}".
 
-5. Email a signed `friend-response` back to the requester. The "From:"
-   header must match the address to which the the friend-request was
-   sent.
+5. Email a signed `friend-response` back to the requester. The
+   activity.inReplyTo value must be the id of the incoming friend
+   request.
 
 6. Email a signed `news-item` with a
    `http://activitystrea.ms/schema/1.0/make-friend` verb to all
@@ -747,7 +752,7 @@ described in the "Interfaces" section of this document.
 
 ### 7.3.3 Process a `friend-response`
 
-1. [Decode][decoded] the incoming `friend-response` .
+1. [Decode][decoded] the incoming `friend-response` activity.
 
 2. Verify signature using the `public-key` property from the `person`
    object of the friend response. If it doesn't verify delete the
@@ -755,21 +760,14 @@ described in the "Interfaces" section of this document.
 
 3. Update `person-status-map.json` for the responding friend
 
-   1. Use the email in the "From:" header to construct an id: "acct:" + email + "#0"
-   2. look that id up in person status map
-   3. if that id is different than the id of the actor in the
-      friend-response's activity, move the entry so that it is keyed
-      by the actor's person.id
-   4. set status = `active`
-   5. set last-received = {current time}
-
-Note on step 3: this can happen if someone moves their IMAPSN data to
-another service and changes their email. Their person.id will still be
-formed out of their old email even though their person.email is
-different.
+   1. Verify that a pending entry exists under the activity.inReplyTo
+      id. 
+   2. If it exists, remove the entry and continue, else, end.
+   3. make a new entry with the actiity.actor.id and set status = `active`
+   4. set last-received = {current time}
 
 4. Store a message containing the `person` JSON object representing
-   the new friend in the IMAPSN folder as `/contacts/{person.id}`.
+   the new friend in the `IMAPSN` folder as `/contacts/{person.id}`.
 
 5. Email a signed `news-item` with a `http://activitystrea.ms/schema/1.0/make-friend`
    to all friends in the configured `wall-group`.
@@ -787,7 +785,7 @@ different.
 3. Update the `last-sent` time for each active group member that the
    message was sent to.
 
-4. Place a copy of sent `news-item` in the IMAPSN folder with a
+4. Place a copy of sent `news-item` in the `IMAPSN` folder with a
    subject of `/news/{activity.id}`. The recipients in the `BCC:`
    header will be used when processing incoming `comment` messages.
 
@@ -797,7 +795,7 @@ different.
 1. Preprocess the incoming message.
 
 2. [Decode][decoded] the `news-item` and place a copy of sent
-   `news-item` in the IMAPSN folder with a subject of
+   `news-item` in the `IMAPSN` folder with a subject of
    `/news/{activity.id}`.
 
 3. The news item may now be displayed in the users's news stream.
@@ -810,14 +808,17 @@ different.
 2. [Decode][decoded] the `wall-post` 
 
    1. If the target of the activity is not the account owner place the
-      wall post in the IMAPSN_news folder and display in news stream. End.
+      wall post in the `IMAPSN` folder with a subject of
+      `/news/{activity.id}" and the UI should display the item in news
+      stream. End.
 
    2. If the target of the activity is the account owner, store the
-      JSON `activity` in a `wall-post` message within the `IMAPSN_wall`
-      folder. Continue.
+      JSON `activity` in a message the `IMAPSN` folder with a subject
+      of `/wall/{activity.id}`. Continue.
 
-3. Determine the active group members of configured `wall-group` 
-   and email each the `wall-post`.  Update `last-sent`.
+3. Determine the active group members of configured `wall-group` and
+   email each a `wall-post` message with the activity attached.
+   Update `last-sent`.
 
 4. The wall post may now be displayed to the user when viewing the wall.
 
@@ -848,10 +849,11 @@ different.
 2. [Decode][decoded] the `comment` 
 
 3. Locate the original message that the comment was made `inReplyTo`
-   in `IMAPSN_news`
+   in the `IMAPSN` folder with a subject of "/news/{value of inReplyTo}".
 
-4. If the original message was not created by `account-owner` display
-   it in news stream with the original.
+4. If the original message was not created by `account-owner` the
+   comment will be displayed by a UI in the news stream with the
+   original. End.
 
 5. Otherwise, if the original message was created by `account-owner`
    find list of recipients the original message was sent to.
@@ -888,15 +890,17 @@ This is processed just like a `news-item`.
 
 3. Update the `last-sent` time in `person-status-map.json` for each recipient.
 
-4. Place a copy of sent `direct-message` in `IMAPSN_inbox`.
+4. Place a copy of sent `direct-message` in the `IMAPSN` folder with a
+   subject of "/inbox/{activity.id}".
 
 
 ### 7.3.12 Process incoming `direct-message`
 
 1. Preprocess the incoming `direct-message`.
 
-2. [Decode][decoded] the `direct-message` and store the JSON `activity` in
-   a `direct-message` within the `IMAPSN_inbox` folder.
+2. [Decode][decoded] the `direct-message` and store the JSON
+   `activity` in a `direct-message` within the `IMAPSN` folder with a
+   subject of "/inbox/{activity.id}".
 
 3. The new message may now be displayed in the users's message inbox.
 
