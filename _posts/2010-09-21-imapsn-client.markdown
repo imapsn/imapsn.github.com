@@ -148,8 +148,7 @@ The IMAPSN client will do the following:
 ### 4.2.2 Use Case: Message an activity to a group
 
 User's define their own groups. A special group called `everybody`
-includes all persons in `IMAPSN_contacts`. Messages are always sent
-to groups using BCC.
+includes all persons in `IMAPSN/contacts`. 
 
 1. user1 chooses a group to receive the message, and composes the message.
 2. user1.client emails the `news-item` message to group
@@ -343,7 +342,7 @@ The activity contains the following properties:
 ### 5.4.6 `person-update`
 
 This is a message that replaces the current data for a friend in
-IMAPSN_contacts.  The message subject is "\[IMAPSN\] person-update:
+IMAPSN/contacts.  The message subject is "\[IMAPSN\] person-update:
 {activity.title}" and it has an attached `person` object.
 
 
@@ -432,36 +431,40 @@ by the client to store passwords is not specified in this document.
 
 The data used by IMAPSN is stored in messages under an IMAP folder.
 Before storing any interface messages in IMAPSN folders the magic
-envelope is removed from the ``application/json`` attachment.  The
-default directory layout is
+envelope is removed from the ``application/json`` attachment.  All
+messages are stored in the configured "imapsn-folder" specified in the
+client's account configuration.  The default name for this folder is
+IMAPSN.  Each message in the IMAPSN folder contains an attached JSON
+file.  The subject of each message is a path where each part is
+separated by a "/".  The final part of the path is the name of the
+attached file. Clients must not use nested IMAP Folders to organize
+messages since nested Folders are not supported by all IMAP servers.
 
-         + folder: IMAPSN_contacts
+The messages in the IMAPSN folder have the following subjects:
+
+         + path: /contacts/*
          |
-         + folder: IMAPSN_inbox
+         + path: /inbox/*
          |
-         + folder: IMAPSN_news
+         + path: /news/*
          |
-         + folder: IMAPSN_wall
+         + path: /wall/*
          |
-         + folder: IMAPSN_config
-            |
-            + message: account-owner.json
-            |
-            + message: person-groups.json
-            |
-            + message: person-status-map.json
-            |
-            + message: key-map.json
+         + path: /config/*
+         |
+         + message: /account-owner.json
+         |
+         + message: /person-groups.json
+         |
+         + message: /person-status-map.json
+         |
+         + message: /key-map.json
 
 
 ## 6.3 Format of Data Stored on IMAP Server But Never Messaged
 
-Since the data will be stored in email messages each message will have
-a standard format.  The subject of messages stored in sub-folders of
-IMAPSN will be "\[IMAPSN\] {message type} : {activity.title}".
-
-Each message is a Multipart/alternative MIME email message that has
-the following parts:
+Each message in the IMAPSN folder is a Multipart/alternative MIME
+email message that has the following parts:
 
 * ``application/json``: the JSON representation serialized in plain text.
 * ``text/plain``: an optional user friendly plaintext representation
@@ -475,11 +478,11 @@ convention for generating globally unique id's will be to use
 addres and `{UUID}` is a [universally unique identifier][UUID].
 
 
-## 6.5 `IMAPSN_config/account-owner.json`
+## 6.5 `/account-owner.json`
 
-`account-owner.json` is a the subject of a message stored in the IMAPSN
-folder.  The `application/json` attachment of this message is an array
-with one or more objects with the following properties.
+`/account-owner.json` is a the subject of a message stored in the
+IMAPSN folder.  The `application/json` attachment of this message is
+an JSON object with one or more objects with the following properties.
 
 <table padding="5" border="1"> 
    <tr><td> field </td> 
@@ -532,20 +535,20 @@ The choice of whether to encrypt the key is left up to clients or
 users.
 
 
-## 6.6 `IMAPSN_config/person-groups.json`
+## 6.6 `/person-groups.json`
 
 A message in the `IMAPSN` folder with the subject
-"person-groups.json".  The `application/json` attachment of this
+"/person-groups.json".  The `application/json` attachment of this
 message will contain a JSON object mapping each `group-name` property
 to an array of person references which contain the properties `id`,
 `dislayName`, and `email`.  The `email` property is a string
 containing the email address.  The `id` strings correspond to `person`
-objects found in `IMAPSN_contacts`.
+objects found in `/contacts` messages.
 
 
-## 6.7 `IMAPSN_config/person-status-map.json`
+## 6.7 `/person-status-map.json`
 
-A message in the IMAPSN folder with the subject "person-status-map.json".
+A message in the IMAPSN folder with the subject "/person-status-map.json".
 The `application/json` attachment of this message will contain a JSON
 object mapping each person `id` to a status object with the folowing
 properties:
@@ -567,24 +570,24 @@ properties:
        <td> Time when an activity or message was last received from this person. </td></tr> 
 </table>
 
-## 6.8 `IMAPSN_config/key-map.json
+## 6.8 `/key-map.json
 
-The key map is a message with the subject `key-map.json` where the
+The key map is a message with the subject `/key-map.json` where the
 attached json data contains a map of "keyhash" values to public
 keys. The key hash is the base64url-encoded SHA256 hash of the public
 signing key's magicsig representation. The public key is a string
 encoding of the pubic key in the [magickey][application/magic-key]
 format.
 
-## 6.9 `IMAPSN_contacts`
+## 6.9 `/contacts`
 
-The IMAPSN_contacts folder will contain one message per person that is
+The IMAPSN folder will contain one message per person that is
 a confirmed friend.
 
-The subject of each message will be "{person.id}".
+The subject of each message will be "/contacts/{person.id}".
 
 The `application/json` attachment of this message is a file named
-"{person.id}.json" that contains a [person][person.json]
+"{person.id}" that contains a [person][person.json]
 object. Some of the important fields are listed here:
 
 <table padding="5" border="1"> 
@@ -620,11 +623,11 @@ documentation.  Here is an example of a media link construct:
     }
 
 
-## 6.10 `IMAPSN_news`
+## 6.10 `/news`
 
-Messages in the IMAPSN_news folder will have a subject of
-"\[IMAPSN\] activity: {activity.title}".  The `application/json`
-attachment of this message will contain an
+Messages in the IMAPSN folder that are news-items will have a subject
+of "/news/{activity.id}".  The `application/json` attachment will be
+named {activity.id} and will contain an
 [activity][activity.json]. Some of the important fields are listed
 here.
 
@@ -644,16 +647,16 @@ here.
 </table>
 
 
-## 6.11 `IMAPSN_wall`
+## 6.11 `/wall`
 
-This is the folder where processed incoming `wall-post` messages are
-stored. A message is removed from the user's wall by deleting it from
-this folder.
+Messages in the IMAPSN folder that are wall-posts will have a subject
+of "/wall/{activity.id}".  
 
-## 6.12 `IMAPSN_inbox`
+## 6.12 `/inbox`
 
-This is the folder where processed incoming `message` messages are
-stored. The IMAP interface is used to mark them as read or not.
+Messages in the IMAPSN folder that are direct messages will have a
+subject of /inbox/{activity.id}". The IMAP interface is used to mark
+them as read or not.
 
 
 # 7. Program Control Flow
@@ -662,15 +665,14 @@ stored. The IMAP interface is used to mark them as read or not.
 
 These steps are taken every time the client starts up.
 
-1. Process all new IMAPSN messages found in either the IMPAP INBOX
-   folder of in IMAPSN_contacts folder based on their `Subject:`
-   fields.
+1. Process all new IMAPSN messages found in the
+   "new-message-folder" conifgured in `/account-owner.json`.
 
-2. Updates the status of each person in IMAPSN_contacts.
+2. Updates the status of each person in `/person-status-map.json`.
 
    1. If status is `pending` the status is left alone.
-   2. if last-received - last-sent > 3 days set status to `neglected`.
-   3. if last-sent - last-received > 3 days set status to `asleep`.
+   2. if now - last-sent > 3 days set status to `neglected`.
+   3. or if now - last-received > 3 days set status to `asleep`.
    4. otherwise set status to `active`.
 
 
@@ -688,7 +690,7 @@ messages will usuall first be processed as follows:
 3. Verify the signature in the magic envelope.  If the signature
    cannot be verified delete the email message, otherwise continue.
 
-4. Look up the sender in the `person-status-map.json` and update their
+4. Look up the sender in the `/person-status-map.json` and update their
    status as prescribed in "Client Start-up".
 
 
@@ -705,7 +707,7 @@ described in the "Interfaces" section of this document.
 
 2. Email the `friend-request` message.
 
-3. Make an initial entry in the `person-status-map.json`.
+3. Make an initial entry in the `/person-status-map.json`.
 
    1. id = "acct:" + friend_email + "#0"
    2. email = from friend request
@@ -720,7 +722,7 @@ described in the "Interfaces" section of this document.
 
 2. Verify signature using the `public-key` property from the `person`
    object of the friend request. If it doesn't verify delete the
-   message, otherwise save the keyhash and key in `key-map.json` and
+   message, otherwise save the keyhash and key in `/key-map.json` and
    continue.
 
 3. Create an entry in the person status map:
@@ -732,7 +734,7 @@ described in the "Interfaces" section of this document.
    5. last-received = {current time} (when friend-request recieved)
 
 4. Store a message containing the decoded `person` JSON object
-   representing the new friend in `IMAPSN_contacts`.
+   representing the new friend in `IMAPSN/contacts`.
 
 5. Email a signed `friend-response` back to the requester. The "From:"
    header must match the address to which the the friend-request was
@@ -767,7 +769,7 @@ formed out of their old email even though their person.email is
 different.
 
 4. Store a message containing the `person` JSON object representing
-   the new friend in `IMAPSN_contacts`.
+   the new friend in the IMAPSN folder as `/contacts/{person.id}`.
 
 5. Email a signed `news-item` with a `http://activitystrea.ms/schema/1.0/make-friend`
    to all friends in the configured `wall-group`.
@@ -777,7 +779,7 @@ different.
 
 1. Determine active group members in the specified group.
 
-   1. Look up each person in the group in `person-status-map.json`. 
+   1. Look up each person in the group in `/person-status-map.json`. 
    2. If status is `pending` or `asleep` then do not include that person, otherwise include.
 
 2. Email a signed `news-item` message BCC'ed to the active group members.
@@ -785,17 +787,18 @@ different.
 3. Update the `last-sent` time for each active group member that the
    message was sent to.
 
-4. Place a copy of sent `news-item` in `IMAPSN_news`. The recipients in
-   the `BCC:` header will be used when processing incoming `comment`
-   messages.
+4. Place a copy of sent `news-item` in the IMAPSN folder with a
+   subject of `/news/{activity.id}`. The recipients in the `BCC:`
+   header will be used when processing incoming `comment` messages.
 
 
 ### 7.3.5 Process a `news-item`
 
 1. Preprocess the incoming message.
 
-2. [Decode][decoded] the `news-item` and store the JSON `activity` in
-   a message within the `IMAPSN_news` folder.
+2. [Decode][decoded] the `news-item` and place a copy of sent
+   `news-item` in the IMAPSN folder with a subject of
+   `/news/{activity.id}`.
 
 3. The news item may now be displayed in the users's news stream.
 
