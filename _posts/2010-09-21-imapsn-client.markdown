@@ -48,7 +48,7 @@ here is a design for implementing social networking concepts on email.
 # 2. References
 
 [Reference Implementation](http://github.com/imapsn/imapsn-lib-java)
-: A java library that implements this specification.
+: An in-progress java library being written to implement this specification.
 
 [Activity Streams Concepts and Representations][json-activity.html]
 : This document describes the *activity construct* and the *object
